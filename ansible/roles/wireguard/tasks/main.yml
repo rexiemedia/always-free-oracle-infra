@@ -1,4 +1,3 @@
----
 - name: Ensure WireGuard config directory exists
   file:
     path: /etc/wireguard
@@ -11,7 +10,6 @@
     dest: /etc/wireguard/wg0.conf
     mode: '0600'
 
-# Check if community.docker is installed
 - name: Check if community.docker collection is available
   command: ansible-galaxy collection list community.docker
   register: docker_collection_check
@@ -24,13 +22,30 @@
   set_fact:
     docker_collection_available: "{{ 'community.docker' in docker_collection_check.stdout }}"
 
-# Preferred: Use community.docker if available
+- name: Check if port 51820/udp is in use
+  ansible.builtin.command: ss -lunp
+  register: port_check
+  changed_when: false
+
+- name: Fail if port 51820 is already in use
+  ansible.builtin.fail:
+    msg: "Port 51820/udp is already in use on {{ inventory_hostname }}. Stop native WireGuard (wg0) or free the port."
+  when: port_check.stdout is search("(:51820\\s)")
+
+- name: Remove stale WireGuard container if stuck
+  community.docker.docker_container:
+    name: wireguard
+    state: absent
+  ignore_errors: true
+  when: docker_collection_available
+
 - name: Deploy WireGuard container with community.docker
   community.docker.docker_container:
     name: wireguard
     image: linuxserver/wireguard:latest
     state: started
     restart_policy: always
+    recreate: true
     privileged: true
     volumes:
       - /etc/wireguard:/config
@@ -41,8 +56,7 @@
       - NET_ADMIN
   when: docker_collection_available
 
-# Fallback: Use raw docker run if community.docker missing
-- name: Deploy WireGuard container with raw docker run
+- name: Deploy WireGuard container with raw docker run (fallback)
   command: >
     docker run -d
     --name wireguard
