@@ -1,24 +1,45 @@
-- name: Remove podman-docker if present
-  dnf:
-    name: podman-docker
-    state: absent
-
-- name: Install Podman and dependencies
+---
+- name: Ensure Python3, pip, and base packages are installed
   dnf:
     name:
-      - podman
+      - python3
       - python3-pip
       - firewalld
       - net-tools
     state: present
-
-- name: Install podman-compose via pip
-  pip:
-    name: podman-compose
-    executable: pip3
 
 - name: Enable firewalld
   service:
     name: firewalld
     state: started
     enabled: true
+
+- name: Enable Oracle developer repo
+  dnf:
+    name: oraclelinux-developer-release-el9
+    state: present
+
+- name: Enable ol9_developer repo
+  command: dnf config-manager --enable ol9_developer
+  args:
+    creates: /etc/yum.repos.d/oracle-linux-ol9-developer.repo
+
+- name: Install Docker CE and plugins
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+
+- name: Enable and start Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Install Docker SDK for Python
+  pip:
+    name: docker
+    executable: pip3

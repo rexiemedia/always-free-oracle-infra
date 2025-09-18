@@ -1,4 +1,8 @@
----
+- name: Install Nginx
+  dnf:
+    name: nginx
+    state: present
+
 - name: Create certs directory
   file:
     path: /etc/nginx/certs
@@ -9,7 +13,7 @@
 
 - name: Copy self-signed cert
   copy:
-    src: files/certs/selfsigned.crt
+    src: selfsigned.crt        # will be resolved from roles/nginx/files/
     dest: /etc/nginx/certs/selfsigned.crt
     owner: root
     group: root
@@ -17,7 +21,7 @@
 
 - name: Copy self-signed key
   copy:
-    src: files/certs/selfsigned.key
+    src: selfsigned.key        # will be resolved from roles/nginx/files/
     dest: /etc/nginx/certs/selfsigned.key
     owner: root
     group: root
@@ -25,19 +29,14 @@
 
 - name: Copy reverse proxy config
   copy:
-    src: default.conf
+    src: default.conf          # also in roles/nginx/files/
     dest: /etc/nginx/conf.d/default.conf
     owner: root
     group: root
     mode: '0644'
 
-- name: Deploy Nginx container
-  docker_container:
+- name: Enable and start Nginx
+  service:
     name: nginx
-    image: nginx:alpine
-    ports:
-      - "443:443"
-    volumes:
-      - /etc/nginx/certs:/etc/nginx/certs
-      - /etc/nginx/conf.d:/etc/nginx/conf.d
-    restart_policy: always
+    state: started
+    enabled: true

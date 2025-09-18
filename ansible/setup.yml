@@ -1,3 +1,4 @@
+---
 - name: Common setup across all VMs
   hosts: all
   become: true
@@ -5,8 +6,10 @@
     - common
 
 - name: Setup Public VM
-  hosts: publicvm
+  hosts: public
   become: true
+  tasks:
+    - import_tasks: roles/common/tasks/public.yml
   roles:
     - nginx
     - wireguard
