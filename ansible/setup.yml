@@ -1,0 +1,31 @@
+- name: Common setup across all VMs
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Setup Public VM
+  hosts: publicvm
+  become: true
+  roles:
+    - nginx
+    - wireguard
+    - tomcat
+
+- name: Setup Wazuh VM
+  hosts: wazuhvm
+  become: true
+  roles:
+    - wazuh
+
+- name: Setup Elasticsearch VM
+  hosts: elasticvm
+  become: true
+  roles:
+    - elasticsearch
+
+- name: Setup Nexus VM
+  hosts: nexusvm
+  become: true
+  roles:
+    - nexus

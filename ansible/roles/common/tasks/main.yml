@@ -1,0 +1,24 @@
+- name: Remove podman-docker if present
+  dnf:
+    name: podman-docker
+    state: absent
+
+- name: Install Podman and dependencies
+  dnf:
+    name:
+      - podman
+      - python3-pip
+      - firewalld
+      - net-tools
+    state: present
+
+- name: Install podman-compose via pip
+  pip:
+    name: podman-compose
+    executable: pip3
+
+- name: Enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true

@@ -1,0 +1,11 @@
+---
+- name: Deploy Elasticsearch
+  docker_container:
+    name: elasticsearch
+    image: elasticsearch:8.11.1
+    ports:
+      - "9200:9200"
+    env:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx1024m"
+    restart_policy: always

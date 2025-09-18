@@ -1,0 +1,12 @@
+---
+- name: Deploy Nexus
+  docker_container:
+    name: nexus
+    image: sonatype/nexus3
+    ports:
+      - "8081:8081"
+    env:
+      INSTALL4J_ADD_VM_PARAMS: "-Xms512m -Xmx1024m"
+    volumes:
+      - nexus-data:/nexus-data
+    restart_policy: always

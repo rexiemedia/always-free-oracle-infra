@@ -1,0 +1,12 @@
+---
+- name: Deploy WireGuard VPN
+  docker_container:
+    name: wireguard
+    image: linuxserver/wireguard
+    capabilities:
+      - NET_ADMIN
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - /etc/wireguard:/config
+    restart_policy: always
