@@ -1,0 +1,15 @@
+# Server settings
+wireguard_server_ip: "10.0.0.1"
+wireguard_private_key: "CHANGEME_SERVER_PRIVATE_KEY"
+wireguard_server_public_key: "CHANGEME_SERVER_PUBLIC_KEY"
+wireguard_server_endpoint: "your.public.ip.or.dns"
+
+# Example peers (with client private keys now)
+wireguard_peers:
+  - name: client1
+    private_key: "CHANGEME_CLIENT1_PRIVATE_KEY"
+    public_key: "CHANGEME_CLIENT1_PUBLIC_KEY"
+    allowed_ips: "10.0.0.2/32"
+
+# Optional DNS for clients
+wireguard_dns: "1.1.1.1"

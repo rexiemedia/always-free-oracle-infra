@@ -1,4 +1,5 @@
 ---
+# Ensure base packages
 - name: Ensure Python3, pip, and base packages are installed
   dnf:
     name:
@@ -6,6 +7,7 @@
       - python3-pip
       - firewalld
       - net-tools
+      - yum-utils  # needed for repo management
     state: present
 
 - name: Enable firewalld
@@ -14,16 +16,26 @@
     state: started
     enabled: true
 
-- name: Enable Oracle developer repo
-  dnf:
-    name: oraclelinux-developer-release-el9
-    state: present
+# Check if Docker CE repo already exists
+- name: Check if Docker CE repo exists
+  stat:
+    path: /etc/yum.repos.d/docker-ce.repo
+  register: docker_repo_file
 
-- name: Enable ol9_developer repo
-  command: dnf config-manager --enable ol9_developer
-  args:
-    creates: /etc/yum.repos.d/oracle-linux-ol9-developer.repo
+# Add Docker CE repo if missing
+- name: Add Docker CE repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+  when: not docker_repo_file.stat.exists
 
+# Ensure Python Docker SDK is present
+- name: Install Docker SDK for Python
+  pip:
+    name: docker
+    executable: pip3
+
+# Install Docker CE and plugins
 - name: Install Docker CE and plugins
   dnf:
     name:
@@ -32,6 +44,7 @@
       - containerd.io
       - docker-compose-plugin
     state: present
+    enablerepo: docker-ce-stable
 
 - name: Enable and start Docker
   service:
@@ -39,7 +52,3 @@
     state: started
     enabled: true
 
-- name: Install Docker SDK for Python
-  pip:
-    name: docker
-    executable: pip3

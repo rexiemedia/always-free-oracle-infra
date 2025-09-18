@@ -1,0 +1,14 @@
+# WireGuard server configuration
+[Interface]
+Address = {{ wireguard_server_ip }}/24
+ListenPort = 51820
+PrivateKey = {{ wireguard_private_key }}
+SaveConfig = true
+
+# Example peer(s)
+{% for peer in wireguard_peers %}
+[Peer]
+# {{ peer.name }}
+PublicKey = {{ peer.public_key }}
+AllowedIPs = {{ peer.allowed_ips }}
+{% endfor %}
