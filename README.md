@@ -55,3 +55,38 @@ Each VM is configured with **1 vCPU and 4GB of RAM** using the `VM.Standard.A1.F
 The `infra-setup` directory contains Ansible playbooks and related files to configure the VMs with various services.
 
 ### Directory Structure
+```plaintext
+always-free-oracle-infrastructure/
+├─ terraform/
+│  ├─ main.tf
+│  ├─ variables.tf
+│  ├─ outputs.tf
+│  ├─ terraform.tfvars
+│  └─ provider.tf
+Ansible/
+├── hosts.ini
+├── setup.yml
+├── roles/
+│   ├── common/
+│   │   └── tasks/main.yml
+│   ├── nginx/
+│   │   └── tasks/main.yml
+│   ├── wireguard/
+│   │   └── tasks/main.yml
+│   ├── tomcat/
+│   │   └── tasks/main.yml
+│   ├── wazuh/
+│   │   └── tasks/main.yml
+│   ├── elasticsearch/
+│   │   └── tasks/main.yml
+│   ├── nexus/
+│   │   └── tasks/main.yml
+├── files/
+│   ├── certs/
+│   │   └── selfsigned.crt
+│   │   └── selfsigned.key
+│   ├── keys/
+│   │   └── id_rsa
+│   └── nginx/
+│       └── conf.d/
+│           └── default.conf
