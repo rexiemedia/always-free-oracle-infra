@@ -1,11 +1,27 @@
 ---
-- name: Deploy Elasticsearch
-  docker_container:
-    name: elasticsearch
-    image: elasticsearch:8.11.1
+- name: Create Wazuh network
+  community.docker.docker_network:
+    name: wazuh-net
+
+- name: Ensure Wazuh Indexer container is running
+  community.docker.docker_container:
+    name: wazuh-indexer
+    image: wazuh/wazuh-indexer:4.7.3
+    platform: linux/amd64
+    state: started
+    restart_policy: always
+    networks:
+      - name: wazuh-net
     ports:
       - "9200:9200"
-    env:
-      discovery.type: single-node
-      ES_JAVA_OPTS: "-Xms512m -Xmx1024m"
-    restart_policy: always
+    volumes:
+      - /var/lib/wazuh-indexer:/var/lib/wazuh-indexer
+
+- name: Open port 9200/tcp for Wazuh Indexer
+  firewalld:
+    port: 9200/tcp
+    permanent: yes
+    state: enabled
+
+- name: Reload firewalld
+  command: firewall-cmd --reload
