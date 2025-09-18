@@ -1,0 +1,12 @@
+# WireGuard client configuration for {{ peer.name }}
+
+[Interface]
+Address = {{ peer.allowed_ips }}
+PrivateKey = {{ peer.private_key }}
+DNS = {{ wireguard_dns | default('1.1.1.1') }}
+
+[Peer]
+PublicKey = {{ wireguard_server_public_key }}
+Endpoint = {{ wireguard_server_endpoint }}:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
