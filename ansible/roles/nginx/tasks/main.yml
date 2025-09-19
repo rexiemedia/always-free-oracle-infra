@@ -1,10 +1,16 @@
 - name: Install Nginx
-  dnf:
+  ansible.builtin.dnf:
     name: nginx
     state: present
 
+- name: Ensure nginx config directory exists
+  ansible.builtin.file:
+    path: /etc/nginx
+    state: directory
+    mode: '0755'
+
 - name: Create certs directory
-  file:
+  ansible.builtin.file:
     path: /etc/nginx/certs
     state: directory
     owner: root
@@ -12,31 +18,49 @@
     mode: '0755'
 
 - name: Copy self-signed cert
-  copy:
-    src: selfsigned.crt        # will be resolved from roles/nginx/files/
+  ansible.builtin.copy:
+    src: selfsigned.crt
     dest: /etc/nginx/certs/selfsigned.crt
     owner: root
     group: root
     mode: '0644'
 
 - name: Copy self-signed key
-  copy:
-    src: selfsigned.key        # will be resolved from roles/nginx/files/
+  ansible.builtin.copy:
+    src: selfsigned.key
     dest: /etc/nginx/certs/selfsigned.key
     owner: root
     group: root
     mode: '0600'
 
 - name: Copy reverse proxy config
-  copy:
-    src: default.conf          # also in roles/nginx/files/
+  ansible.builtin.copy:
+    src: default.conf
     dest: /etc/nginx/conf.d/default.conf
     owner: root
     group: root
     mode: '0644'
 
+- name: Ensure httpd-tools is installed (for htpasswd)
+  ansible.builtin.dnf:
+    name: httpd-tools
+    state: present
+
+- name: Ensure bcrypt lib is installed for htpasswd
+  ansible.builtin.pip:
+    name: bcrypt
+    state: present
+
+- name: Create Nexus/Tomcat auth file
+  community.general.htpasswd:
+    path: /etc/nginx/.htpasswd
+    name: nexusadmin
+    password: "{{ nexus_tomcat_password }}"
+    crypt_scheme: bcrypt
+  no_log: true
+
 - name: Enable and start Nginx
-  service:
+  ansible.builtin.service:
     name: nginx
     state: started
     enabled: true
