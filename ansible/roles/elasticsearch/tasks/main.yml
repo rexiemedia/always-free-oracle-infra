@@ -17,9 +17,10 @@
     volumes:
       - /var/lib/wazuh-indexer:/var/lib/wazuh-indexer
 
-- name: Open port 9200/tcp for Wazuh Indexer
+#Firewall rules
+- name: Allow 9200/tcp only from Wazuh VM
   firewalld:
-    port: 9200/tcp
+    rich_rule: 'rule family="ipv4" source address="{{ wazuh_private_ip }}" port protocol="tcp" port="9200" accept'
     permanent: yes
     state: enabled
 

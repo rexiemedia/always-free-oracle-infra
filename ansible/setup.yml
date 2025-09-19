@@ -15,11 +15,11 @@
     - wireguard
     - tomcat
 
-- name: Setup Wazuh VM
-  hosts: wazuhvm
-  become: true
+- hosts: wazuh_manager
+  become: yes
   roles:
-    - wazuh
+    - role: wazuh-manager
+    - role: wazuh-dashboard
 
 - name: Setup Elasticsearch VM
   hosts: elasticvm

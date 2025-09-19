@@ -1,0 +1,8 @@
+# Wazuh Dashboard config
+server.host: "0.0.0.0"
+server.port: 5601
+
+opensearch.hosts: ["https://{{ wazuh_indexer_host }}:9200"]
+
+opensearch.username: "{{ wazuh_dashboard_user }}"
+opensearch.password: "{{ wazuh_dashboard_password }}"

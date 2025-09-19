@@ -24,6 +24,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reload Nginx
 
 - name: Copy self-signed key
   ansible.builtin.copy:
@@ -32,6 +33,7 @@
     owner: root
     group: root
     mode: '0600'
+  notify: Reload Nginx
 
 - name: Copy reverse proxy config
   ansible.builtin.copy:
@@ -40,23 +42,34 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reload Nginx
 
 - name: Ensure httpd-tools is installed (for htpasswd)
   ansible.builtin.dnf:
     name: httpd-tools
     state: present
 
-- name: Ensure bcrypt lib is installed for htpasswd
-  ansible.builtin.pip:
-    name: bcrypt
+- name: Ensure python3-pip is installed
+  ansible.builtin.dnf:
+    name: python3-pip
     state: present
 
-- name: Create Nexus/Tomcat auth file
+- name: Ensure passlib is installed (with bcrypt support)
+  ansible.builtin.pip:
+    name: passlib[bcrypt]
+    state: present
+
+- name: Create multiple htpasswd users
   community.general.htpasswd:
-    path: /etc/nginx/.htpasswd
-    name: nexusadmin
-    password: "{{ nexus_tomcat_password }}"
+    path: "/etc/nginx/.htpasswd_{{ item.service }}"
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
     crypt_scheme: bcrypt
+  loop:
+    - { service: "nginx",  user: "{{ nginx_auth_user }}",  password: "{{ nginx_auth_password }}" }
+    - { service: "wazuh",  user: "{{ wazuh_auth_user }}",  password: "{{ wazuh_auth_password }}" }
+    - { service: "nexus",  user: "{{ nexus_auth_user }}",  password: "{{ nexus_auth_password }}" }
+    - { service: "tomcat", user: "{{ tomcat_auth_user }}", password: "{{ tomcat_auth_password }}" }
   no_log: true
 
 - name: Enable and start Nginx
