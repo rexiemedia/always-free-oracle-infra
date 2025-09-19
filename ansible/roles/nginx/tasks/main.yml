@@ -59,18 +59,20 @@
     name: passlib[bcrypt]
     state: present
 
-- name: Ensure nginx htpasswd files are updated
+- name: Remove old htpasswd files
+  file:
+    path: "{{ item.file }}"
+    state: absent
+  loop: "{{ nginx_users }}"
+
+- name: Recreate htpasswd files fresh
   community.general.htpasswd:
-    path: "{{ item }}"
-    name: "{{ nginx_auth_user }}"
-    password: "{{ nginx_auth_password }}"
+    path: "{{ item.file }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
     crypt_scheme: bcrypt
     state: present
-  loop:
-    - /etc/nginx/.htpasswd_nginx
-    - /etc/nginx/.htpasswd_nexus
-    - /etc/nginx/.htpasswd_wazuh
-    - /etc/nginx/.htpasswd_tomcat
+  loop: "{{ nginx_users }}"
   no_log: true
 
 - name: Enable and start Nginx
