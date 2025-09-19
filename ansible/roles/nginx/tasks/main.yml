@@ -59,17 +59,18 @@
     name: passlib[bcrypt]
     state: present
 
-- name: Create multiple htpasswd users
+- name: Ensure nginx htpasswd files are updated
   community.general.htpasswd:
-    path: "/etc/nginx/.htpasswd_{{ item.service }}"
-    name: "{{ item.user }}"
-    password: "{{ item.password }}"
+    path: "{{ item }}"
+    name: "{{ nginx_auth_user }}"
+    password: "{{ nginx_auth_password }}"
     crypt_scheme: bcrypt
+    state: present
   loop:
-    - { service: "nginx",  user: "{{ nginx_auth_user }}",  password: "{{ nginx_auth_password }}" }
-    - { service: "wazuh",  user: "{{ wazuh_auth_user }}",  password: "{{ wazuh_auth_password }}" }
-    - { service: "nexus",  user: "{{ nexus_auth_user }}",  password: "{{ nexus_auth_password }}" }
-    - { service: "tomcat", user: "{{ tomcat_auth_user }}", password: "{{ tomcat_auth_password }}" }
+    - /etc/nginx/.htpasswd_nginx
+    - /etc/nginx/.htpasswd_nexus
+    - /etc/nginx/.htpasswd_wazuh
+    - /etc/nginx/.htpasswd_tomcat
   no_log: true
 
 - name: Enable and start Nginx

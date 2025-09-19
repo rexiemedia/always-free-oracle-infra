@@ -8,6 +8,7 @@
 - name: Setup Public VM
   hosts: public
   become: true
+  gather_facts: false
   tasks:
     - import_tasks: roles/common/tasks/public.yml
   roles:
@@ -17,6 +18,7 @@
 
 - hosts: wazuh_manager
   become: yes
+  gather_facts: false
   roles:
     - role: wazuh-manager
     - role: wazuh-dashboard
@@ -24,6 +26,7 @@
 - name: Setup Elasticsearch VM
   hosts: elasticvm
   become: true
+  gather_facts: false
   roles:
     - elasticsearch
 
