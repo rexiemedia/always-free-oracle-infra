@@ -1,54 +1,34 @@
 ---
-# Ensure base packages
-- name: Ensure Python3, pip, and base packages are installed
-  dnf:
-    name:
-      - python3
-      - python3-pip
-      - firewalld
-      - net-tools
-      - yum-utils  # needed for repo management
-    state: present
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update and upgrade system packages
+      apt:
+        update_cache: yes
+        upgrade: dist
 
-- name: Enable firewalld
-  service:
-    name: firewalld
-    state: started
-    enabled: true
+    - name: Install required dependencies for Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: yes
 
-# Check if Docker CE repo already exists
-- name: Check if Docker CE repo exists
-  stat:
-    path: /etc/yum.repos.d/docker-ce.repo
-  register: docker_repo_file
+    - name: Add Docker’s official GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
-# Add Docker CE repo if missing
-- name: Add Docker CE repo
-  get_url:
-    url: https://download.docker.com/linux/centos/docker-ce.repo
-    dest: /etc/yum.repos.d/docker-ce.repo
-  when: not docker_repo_file.stat.exists
+    - name: Set up Docker repository
+      ansible.builtin.shell: |
+        echo "deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Ensure Python Docker SDK is present
-- name: Install Docker SDK for Python
-  pip:
-    name: docker
-    executable: pip3
-
-# Install Docker CE and plugins
-- name: Install Docker CE and plugins
-  dnf:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-compose-plugin
-    state: present
-    enablerepo: docker-ce-stable
-
-- name: Enable and start Docker
-  service:
-    name: docker
-    state: started
-    enabled: true
-
+    - name: Install Docker Engine and Docker Compose
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - container

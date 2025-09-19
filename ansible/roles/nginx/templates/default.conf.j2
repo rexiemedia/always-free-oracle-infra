@@ -1,46 +1,40 @@
-# Default reverse proxy config for DuckDNS subdomains
+server_tokens off;
 
-# Redirect all HTTP traffic to HTTPS
 server {
-    server_tokens off;
     listen 80;
-    server_name desdevsecops.duckdns.org nexus.desdevsecops.duckdns.org tomcat.desdevsecops.duckdns.org wazuh.desdevsecops.duckdns.org;
+    server_name {{ nginx_domain }} nexus.{{ nginx_domain }} tomcat.{{ nginx_domain }} wazuh.{{ nginx_domain }} wg.{{ nginx_domain }};
     return 301 https://$host$request_uri;
 }
-# Default landing page (main domain)
+
+# Default landing page
 server {
     listen 443 ssl;
-    server_name desdevsecops.duckdns.org;
-
+    server_name {{ nginx_domain }};
     ssl_certificate     /etc/nginx/certs/selfsigned.crt;
     ssl_certificate_key /etc/nginx/certs/selfsigned.key;
 
     location / {
         root /usr/share/nginx/html;
         index index.html;
-
-        # Basic Auth
         auth_basic "Restricted - Landing Page";
         auth_basic_user_file /etc/nginx/.htpasswd_nginx;
     }
 }
-# Nexus
-server { 
-    listen 443 ssl;
-    server_name nexus.desdevsecops.duckdns.org;
 
+# Nexus
+server {
+    listen 443 ssl;
+    server_name nexus.{{ nginx_domain }};
     ssl_certificate     /etc/nginx/certs/selfsigned.crt;
     ssl_certificate_key /etc/nginx/certs/selfsigned.key;
 
     location / {
-        proxy_pass http://10.0.2.254:8081;   # Nexus VM private IP + port
+        proxy_pass http://{{ nexus_private_ip }}:8081;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Basic Auth
-        auth_basic "Restricted - Nexus Repository";
+        auth_basic "Restricted - Nexus";
         auth_basic_user_file /etc/nginx/.htpasswd_nexus;
     }
 }
@@ -48,40 +42,49 @@ server {
 # Wazuh
 server {
     listen 443 ssl;
-    server_name wazuh.desdevsecops.duckdns.org;
-
+    server_name wazuh.{{ nginx_domain }};
     ssl_certificate     /etc/nginx/certs/selfsigned.crt;
     ssl_certificate_key /etc/nginx/certs/selfsigned.key;
 
     location / {
-        proxy_pass http://10.0.2.89:5601;   # Wazuh dashboard (Kibana) port
+        proxy_pass http://{{ wazuh_private_ip }}:5601;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Basic Auth
-        auth_basic "Restricted - Wazuh Dashboard";
+        auth_basic "Restricted - Wazuh";
         auth_basic_user_file /etc/nginx/.htpasswd_wazuh;
     }
 }
+
 # Tomcat
 server {
     listen 443 ssl;
-    server_name tomcat.desdevsecops.duckdns.org;
-
+    server_name tomcat.{{ nginx_domain }};
     ssl_certificate     /etc/nginx/certs/selfsigned.crt;
     ssl_certificate_key /etc/nginx/certs/selfsigned.key;
 
     location / {
-        proxy_pass http://10.0.1.21:8080; 
+        proxy_pass http://{{ tomcat_private_ip }}:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Basic Auth
-        auth_basic "Restricted - Tomcat Manager";
+        auth_basic "Restricted - Tomcat";
         auth_basic_user_file /etc/nginx/.htpasswd_tomcat;
+    }
+}
+
+# WireGuard GUI
+server {
+    listen 443 ssl;
+    server_name wg.{{ nginx_domain }};
+    ssl_certificate     /etc/nginx/certs/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/certs/selfsigned.key;
+
+    location / {
+        proxy_pass http://{{ wireguard_private_ip }}:51821/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }

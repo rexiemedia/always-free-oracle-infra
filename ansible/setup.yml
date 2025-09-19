@@ -1,37 +1,57 @@
 ---
-- name: Common setup across all VMs
-  hosts: all
-  become: true
+- hosts: all
   roles:
     - common
 
-- name: Setup Public VM
-  hosts: public
-  become: true
-  gather_facts: false
-  tasks:
-    - import_tasks: roles/common/tasks/public.yml
+- hosts: publicvm
   roles:
     - nginx
-    - wireguard
     - tomcat
 
-- hosts: wazuh_manager
-  become: yes
-  gather_facts: false
+- hosts: wazuh
   roles:
-    - role: wazuh-manager
-    - role: wazuh-dashboard
+    - wazuh
 
-- name: Setup Elasticsearch VM
-  hosts: elasticvm
-  become: true
-  gather_facts: false
-  roles:
-    - elasticsearch
-
-- name: Setup Nexus VM
-  hosts: nexusvm
-  become: true
+- hosts: nexus
   roles:
     - nexus
+
+- hosts: wireguard
+  roles:
+    - wireguard
+
+# - name: Common setup across all VMs
+#   hosts: all
+#   become: true
+#   roles:
+#     - common
+
+# - name: Setup Public VM
+#   hosts: public
+#   become: true
+#   gather_facts: false
+#   tasks:
+#     - import_tasks: roles/common/tasks/public.yml
+#   roles:
+#     - nginx
+#     - tomcat
+
+# - hosts: wazuh_manager
+#   become: yes
+#   gather_facts: false
+#   roles:
+#     - role: wazuh-manager
+#     - role: wazuh-dashboard
+
+# - name: Setup Elasticsearch VM
+#   hosts: elasticvm
+#   become: true
+#   gather_facts: false
+#   roles:
+#     - elasticsearch
+
+# - name: Setup Nexus VM
+#   hosts: nexusvm
+#   become: true
+#   roles:
+#     - nexus
