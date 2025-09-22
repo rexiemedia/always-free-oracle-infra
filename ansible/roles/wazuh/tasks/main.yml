@@ -1,0 +1,85 @@
+---
+- name: Create Wazuh Docker network
+  community.docker.docker_network:
+    name: wazuh-net
+
+- name: Ensure Wazuh Indexer container is running
+  community.docker.docker_container:
+    name: wazuh-indexer
+    image: wazuh/wazuh-indexer:4.7.3
+    platform: linux/amd64
+    state: started
+    restart_policy: always
+    networks:
+      - name: wazuh-net
+    ports:
+      - "9200:9200"
+    volumes:
+      - /var/lib/wazuh-indexer:/var/lib/wazuh-indexer
+
+- name: Ensure Wazuh Dashboard container is running
+  community.docker.docker_container:
+    name: wazuh-dashboard
+    image: wazuh/wazuh-dashboard:{{ wazuh_version}}
+    state: started
+    restart_policy: always
+    env:
+      WAZUH_API_USER: "{{ wazuh_api_user }}"
+      WAZUH_API_PASSWORD: "{{ wazuh_api_password }}"
+    ports:
+      - "5601:5601"
+    volumes:
+      - /var/ossec/data:/var/ossec/data
+
+- name: Ensure Wazuh Dashboard container is running
+  community.docker.docker_container:
+    name: wazuh-dashboard
+    image: wazuh/wazuh-dashboard:4.7.3
+    platform: linux/amd64
+    state: started
+    restart_policy: always
+    networks:
+      - name: wazuh-net
+    ports:
+      - "5601:5601"
+    env:
+      WAZUH_API_URL: "https://wazuh-manager:55000"
+      WAZUH_API_USER: "{{ wazuh_api_user }}"
+      WAZUH_API_PASSWORD: "{{ wazuh_api_password }}"
+      WAZUH_INDEXER_URL: "https://{{ wazuh_indexer_host }}:9200"
+
+- name: Allow 9200/tcp only from Wazuh VM
+  firewalld:
+    rich_rule: >
+      rule family="ipv4"
+      source address="{{ wazuh_private_ip }}"
+      port protocol="tcp" port="9200" accept
+    permanent: true
+    state: enabled
+
+- name: Allow 5601/tcp only from Nginx
+  firewalld:
+    rich_rule: >
+      rule family="ipv4"
+      source address="{{ nginx_private_ip }}"
+      port protocol="tcp" port="5601" accept
+    permanent: true
+    state: enabled
+
+- name: Allow 55000/tcp only from Nginx
+  firewalld:
+    rich_rule: >
+      rule family="ipv4"
+      source address="{{ nginx_private_ip }}"
+      port protocol="tcp" port="55000" accept
+    permanent: true
+    state: enabled
+
+- name: Allow 1514/udp + 1515/tcp from any agent
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - 1514/udp
+    - 1515/tcp

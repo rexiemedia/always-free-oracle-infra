@@ -1,3 +1,4 @@
+---
 # Server settings
 wireguard_server_ip: "10.0.0.1"
 wireguard_private_key: "CHANGEME_SERVER_PRIVATE_KEY"

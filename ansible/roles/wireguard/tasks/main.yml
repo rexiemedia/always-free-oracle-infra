@@ -1,55 +1,12 @@
 ---
-- name: Ensure WireGuard config directory exists
-  file:
-    path: /etc/wireguard
-    state: directory
-    mode: '0700'
-
-- name: Deploy WireGuard config file
-  template:
-    src: wg0.conf.j2
-    dest: /etc/wireguard/wg0.conf
-    mode: '0600'
-
-# Check if port 51820/udp is in use
-- name: Check if port 51820/udp is in use
-  ansible.builtin.command: ss -lunp
-  register: port_check
-  changed_when: false
-
-- name: Stop native WireGuard if wg0 is active
-  ansible.builtin.command: wg-quick down wg0
-  when: port_check.stdout is search("(:51820\\s)")
-  ignore_errors: true
-
-- name: Disable systemd auto-start for wg0
-  ansible.builtin.systemd:
-    name: wg-quick@wg0
-    enabled: no
-    state: stopped
-  when: port_check.stdout is search("(:51820\\s)")
-  ignore_errors: true
-
-# Remove stale WireGuard container
-- name: Remove stale WireGuard container if stuck
-  community.docker.docker_container:
-    name: wireguard
-    state: absent
-  ignore_errors: true
-
-# Deploy WireGuard container
 - name: Deploy WireGuard container
   community.docker.docker_container:
     name: wireguard
-    image: linuxserver/wireguard:latest
+    image: linuxserver/wireguard
     state: started
     restart_policy: always
-    recreate: true
-    privileged: true
+    ports:
+      - "51820:51820/udp"
     volumes:
       - /etc/wireguard:/config
       - /lib/modules:/lib/modules
-    ports:
-      - "51820:51820/udp"
-    capabilities:
-      - NET_ADMIN

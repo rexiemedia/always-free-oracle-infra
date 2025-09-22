@@ -1,0 +1,22 @@
+---
+- name: Copy SSH key to public VM for bastion access
+  hosts: public
+  become: true
+  gather_facts: false
+  tasks:
+
+  - name: Ensure .ssh directory exists
+    file:
+      path: /home/{{ ansible_user }}/.ssh
+      state: directory
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: '0700'
+
+  - name: Copy private key to public VM
+    copy:
+      src: "~/.ssh/oci_api_key.pem"
+      dest: "/home/{{ ansible_user }}/.ssh/oci_api_key.pem"
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: '0600'

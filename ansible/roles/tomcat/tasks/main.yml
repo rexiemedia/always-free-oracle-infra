@@ -1,10 +1,11 @@
 ---
 - name: Deploy Tomcat container
-  docker_container:
+  community.docker.docker_container:
     name: tomcat
     image: tomcat:9.0-jdk11-slim
+    state: started
+    restart_policy: always
     ports:
       - "8080:8080"
     env:
       JAVA_OPTS: "-Xms128m -Xmx256m"
-    restart_policy: always

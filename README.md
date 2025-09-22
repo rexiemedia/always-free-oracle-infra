@@ -63,30 +63,19 @@ always-free-oracle-infrastructure/
 │  ├─ outputs.tf
 │  ├─ terraform.tfvars
 │  └─ provider.tf
-Ansible/
-├── hosts.ini
+ansible/
+├── hosts.yml
+├── group_vars/
+│   └── all.yml
+├── bootstrap.yml
 ├── setup.yml
-├── roles/
-│   ├── common/
-│   │   └── tasks/main.yml
-│   ├── nginx/
-│   │   └── tasks/main.yml
-│   ├── wireguard/
-│   │   └── tasks/main.yml
-│   ├── tomcat/
-│   │   └── tasks/main.yml
-│   ├── wazuh/
-│   │   └── tasks/main.yml
-│   ├── elasticsearch/
-│   │   └── tasks/main.yml
-│   ├── nexus/
-│   │   └── tasks/main.yml
-├── files/
-│   ├── certs/
-│   │   └── selfsigned.crt
-│   │   └── selfsigned.key
-│   ├── keys/
-│   │   └── id_rsa
-│   └── nginx/
-│       └── conf.d/
-│           └── default.conf
+└── roles/
+    ├── common/tasks/main.yml
+    ├── nginx/
+    │   ├── tasks/main.yml
+    │   └── templates/default.conf.j2
+    ├── tomcat/tasks/main.yml
+    ├── wazuh/tasks/main.yml
+    │   └── templates/docker-compose.yml.j2
+    ├── nexus/tasks/main.yml
+    └── wireguard/tasks/main.yml

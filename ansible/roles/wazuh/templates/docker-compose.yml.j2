@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  wazuh.manager:
+    image: wazuh/wazuh-manager:latest
+    ports:
+      - "1514:1514/udp"
+      - "1515:1515"
+      - "55000:55000"
+    networks:
+      - wazuh-net
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:latest
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://{{ elastic_private_ip }}:9200
+    networks:
+      - wazuh-net
+
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:latest
+    ports:
+      - "9200:9200"
+    networks:
+      - wazuh-net
+
+networks:
+  wazuh-net:
+    driver: bridge
