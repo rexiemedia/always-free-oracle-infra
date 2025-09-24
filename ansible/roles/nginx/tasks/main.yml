@@ -23,12 +23,13 @@
   loop:
     - selfsigned.crt
     - selfsigned.key
+  notify: Reload nginx
 
 - name: Ensure pip is installed
   apt:
     name: python3-pip
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Install passlib Python module
   pip:
@@ -43,11 +44,16 @@
     crypt_scheme: bcrypt
     create: true
   no_log: true
+  notify: Reload nginx
 
 - name: Deploy nginx config
   template:
     src: default.conf.j2
     dest: /etc/nginx/conf.d/default.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx
 
 - name: Deploy default Nginx page
   template:
@@ -58,3 +64,8 @@
     mode: '0644'
   notify: Reload nginx
 
+- name: Install autossh
+  apt:
+    name: autossh
+    state: present
+    update_cache: true

@@ -1,54 +1,59 @@
 ---
-- name: Create Wazuh Docker network
-  community.docker.docker_network:
-    name: wazuh-net
+- name: Install Docker and Compose
+  apt:
+    name:
+      - docker.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+  become: true
 
-- name: Ensure Wazuh Indexer container is running
-  community.docker.docker_container:
-    name: wazuh-indexer
-    image: wazuh/wazuh-indexer:4.7.3
-    platform: linux/amd64
+- name: Ensure Docker service is running
+  service:
+    name: docker
     state: started
-    restart_policy: always
-    networks:
-      - name: wazuh-net
-    ports:
-      - "9200:9200"
-    volumes:
-      - /var/lib/wazuh-indexer:/var/lib/wazuh-indexer
+    enabled: true
+  become: true
 
-- name: Ensure Wazuh Dashboard container is running
-  community.docker.docker_container:
-    name: wazuh-dashboard
-    image: wazuh/wazuh-dashboard:{{ wazuh_version}}
-    state: started
-    restart_policy: always
-    env:
-      WAZUH_API_USER: "{{ wazuh_api_user }}"
-      WAZUH_API_PASSWORD: "{{ wazuh_api_password }}"
-    ports:
-      - "5601:5601"
-    volumes:
-      - /var/ossec/data:/var/ossec/data
+- name: Create Wazuh project directory
+  file:
+    path: "{{ docker_compose_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
 
-- name: Ensure Wazuh Dashboard container is running
-  community.docker.docker_container:
-    name: wazuh-dashboard
-    image: wazuh/wazuh-dashboard:4.7.3
-    platform: linux/amd64
-    state: started
-    restart_policy: always
-    networks:
-      - name: wazuh-net
-    ports:
-      - "5601:5601"
-    env:
-      WAZUH_API_URL: "https://wazuh-manager:55000"
-      WAZUH_API_USER: "{{ wazuh_api_user }}"
-      WAZUH_API_PASSWORD: "{{ wazuh_api_password }}"
-      WAZUH_INDEXER_URL: "https://{{ wazuh_indexer_host }}:9200"
+- name: Stop and remove old Wazuh containers and volumes
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_dir }}"
+    state: absent
+    remove_volumes: true
+    remove_images: all
+  ignore_errors: true
+  become: true
 
-- name: Allow 9200/tcp only from Wazuh VM
+- name: Deploy Wazuh Docker Compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0644'
+    force: true
+  notify: Deploy Wazuh stack with Docker Compose v2
+  become: true
+
+- name: Deploy Wazuh stack with Docker Compose v2
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_compose_dir }}"
+    state: present
+    recreate: always
+    remove_orphans: true
+    pull: always
+  become: true
+
+- name: Allow Wazuh Indexer (9200) from Wazuh VM
   firewalld:
     rich_rule: >
       rule family="ipv4"
@@ -56,8 +61,9 @@
       port protocol="tcp" port="9200" accept
     permanent: true
     state: enabled
+  become: true
 
-- name: Allow 5601/tcp only from Nginx
+- name: Allow Wazuh Dashboard (5601) from Nginx
   firewalld:
     rich_rule: >
       rule family="ipv4"
@@ -65,8 +71,9 @@
       port protocol="tcp" port="5601" accept
     permanent: true
     state: enabled
+  become: true
 
-- name: Allow 55000/tcp only from Nginx
+- name: Allow Wazuh API (55000) from Nginx
   firewalld:
     rich_rule: >
       rule family="ipv4"
@@ -74,8 +81,9 @@
       port protocol="tcp" port="55000" accept
     permanent: true
     state: enabled
+  become: true
 
-- name: Allow 1514/udp + 1515/tcp from any agent
+- name: Allow agents to connect (1514/udp, 1515/tcp)
   firewalld:
     port: "{{ item }}"
     permanent: true
@@ -83,3 +91,4 @@
   loop:
     - 1514/udp
     - 1515/tcp
+  become: true
